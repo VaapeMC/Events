@@ -1,0 +1,36 @@
+name: Events
+main: me.vaape.events.Events
+version: 1.0
+api-version: 1.15
+depend: [Guilds, WorldGuard, WorldGuardEvents, WorldEdit, Rewards]
+commands:
+  scoreboard:
+    description: Toggle event scoreboard
+  sb:
+    description: Toggle event scoreboard
+  guildwars:
+    description: Get info on Guild Wars
+  gw:
+    description: Get info on Guild Wars
+  guildwarsstart:
+    description: Starts Guild Wars
+  gwstart:
+    description: Starts Guild Wars
+  guildwarsend:
+    description: Ends Guild Wars
+  gwend:
+    description: Ends Guild Wars
+  guildwarsrefill:
+    description: Refills loot chests
+  gwrefill:
+    description: Refills loot chests
+  dropcrate:
+    description: Drops a crate
+  fstart:
+    description: Starts fishing event
+  fishstart:
+    description: Starts fishing event
+  fish:
+    description: Get info on fishing event
+  fishing:
+    description: Get info on fishing event
