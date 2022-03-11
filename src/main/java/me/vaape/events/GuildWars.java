@@ -1,6 +1,8 @@
 package me.vaape.events;
 
 import com.destroystokyo.paper.event.player.PlayerLaunchProjectileEvent;
+import com.github.crashdemons.playerheads.api.PlayerHeads;
+import com.github.crashdemons.playerheads.api.PlayerHeadsAPI;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldguard.WorldGuard;
@@ -74,7 +76,16 @@ public class GuildWars implements CommandExecutor, Listener {
                 sender.sendMessage(ChatColor.GREEN + "Guild Wars started.");
                 startGuildWarsMessages();
             } else {
-                sender.sendMessage("Unknown command. Type \"/help\" for help.");
+                sender.sendMessage(ChatColor.RED + "You don't have permission to do that.");
+            }
+        }
+
+        if (cmd.getName().equalsIgnoreCase("guildwarsstartnow") || cmd.getName().equalsIgnoreCase("gwstartnow")) {
+            if (sender.isOp()) {
+                sender.sendMessage(ChatColor.GREEN + "Guild Wars started.");
+                startGuildWars();
+            } else {
+                sender.sendMessage(ChatColor.RED + "You don't have permission to do that.");
             }
         }
 
@@ -96,20 +107,29 @@ public class GuildWars implements CommandExecutor, Listener {
             }
         }
 
+        if (cmd.getName().equalsIgnoreCase("guildwarsallowupgrade") || cmd.getName().equalsIgnoreCase("gwallowupgrade")) {
+            if (sender.isOp()) {
+                canUpgrade = true;
+                Bukkit.broadcastMessage(ChatColor.GOLD + "[Guild Wars] " + ChatColor.BLUE + "The castle can now be upgraded.");
+            } else {
+                Bukkit.getServer().broadcastMessage(ChatColor.RED + "You do not have permission to do this.");
+            }
+        }
+
         if (sender instanceof Player) {
 
             Player player = (Player) sender;
 
             if (cmd.getName().equalsIgnoreCase("guildwars") || cmd.getName().equalsIgnoreCase("gw")) {
 
-                ZoneId zone = ZoneId.of("-05:00");
+                ZoneId zone = ZoneId.of("UTC");
 
                 LocalDateTime now = LocalDateTime.now(zone);
-                LocalDateTime nextWednesday = now.with(TemporalAdjusters.nextOrSame(DayOfWeek.WEDNESDAY)).with(LocalTime.of(16, 0));
-                LocalDateTime nextSaturday = now.with(TemporalAdjusters.nextOrSame(DayOfWeek.SATURDAY)).with(LocalTime.of(16, 0));
+                LocalDateTime nextTuesday = now.with(TemporalAdjusters.nextOrSame(DayOfWeek.TUESDAY)).with(LocalTime.of(21, 0));
+                LocalDateTime nextSaturday = now.with(TemporalAdjusters.nextOrSame(DayOfWeek.SATURDAY)).with(LocalTime.of(21, 0));
 
-                long millisUntilWednesday = now.until(nextWednesday, ChronoUnit.SECONDS);
-                long millisUntilSaturday = now.until(nextSaturday, ChronoUnit.SECONDS);
+                long secondsUntilTuesday = now.until(nextTuesday, ChronoUnit.SECONDS);
+                long secondsUntilSaturday = now.until(nextSaturday, ChronoUnit.SECONDS);
 
                 player.sendMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "Guild Wars info:");
                 player.sendMessage(ChatColor.BLUE + "Current defenders: " + ChatColor.GRAY + plugin.getConfig().getString("defenders"));
@@ -117,18 +137,18 @@ public class GuildWars implements CommandExecutor, Listener {
 
                 if (gwRunning) {
                     player.sendMessage(ChatColor.BLUE + "Next attack: " + ChatColor.GREEN + "Attacking now");
-                } else if (millisUntilWednesday < millisUntilSaturday) {
-                    player.sendMessage(ChatColor.BLUE + "Next attack: " + ChatColor.GRAY + "Wednesday 16:00 EST");
+                } else if (secondsUntilTuesday < secondsUntilSaturday) {
+                    player.sendMessage(ChatColor.BLUE + "Next attack: " + ChatColor.GRAY + "Tuesday 21:00 GMT");
                     player.sendMessage(ChatColor.BLUE + "Time until next attack: " +
                             ChatColor.GRAY + String.format("%d hours %d minutes",
-                            TimeUnit.SECONDS.toHours(millisUntilWednesday),
-                            TimeUnit.SECONDS.toMinutes(millisUntilWednesday) - TimeUnit.HOURS.toMinutes(TimeUnit.SECONDS.toHours(millisUntilWednesday))));
+                            TimeUnit.SECONDS.toHours(secondsUntilTuesday),
+                            TimeUnit.SECONDS.toMinutes(secondsUntilTuesday) - TimeUnit.HOURS.toMinutes(TimeUnit.SECONDS.toHours(secondsUntilTuesday))));
                 } else {
-                    player.sendMessage(ChatColor.BLUE + "Next attack: " + ChatColor.GRAY + "Saturday 16:00 EST");
+                    player.sendMessage(ChatColor.BLUE + "Next attack: " + ChatColor.GRAY + "Saturday 21:00 GMT");
                     player.sendMessage(ChatColor.BLUE + "Time until next attack: " +
                             ChatColor.GRAY + String.format("%d hours %d minutes",
-                            TimeUnit.SECONDS.toHours(millisUntilSaturday),
-                            TimeUnit.SECONDS.toMinutes(millisUntilSaturday) - TimeUnit.HOURS.toMinutes(TimeUnit.SECONDS.toHours(millisUntilSaturday))));
+                            TimeUnit.SECONDS.toHours(secondsUntilSaturday),
+                            TimeUnit.SECONDS.toMinutes(secondsUntilSaturday) - TimeUnit.HOURS.toMinutes(TimeUnit.SECONDS.toHours(secondsUntilSaturday))));
                 }
             }
         }
@@ -181,6 +201,11 @@ public class GuildWars implements CommandExecutor, Listener {
         //Create Queen
         spawnQueen(200, true);
 
+        //Log original holders/level
+        plugin.getConfig().set("original defenders", plugin.getConfig().getString("defenders"));
+        plugin.getConfig().set("original defenders level", 0);
+        plugin.saveConfig();
+
         //Timer
         new Timer().schedule(new TimerTask() {
 
@@ -191,8 +216,8 @@ public class GuildWars implements CommandExecutor, Listener {
             public void run() {
                 seconds--;
 
-                //If castle level is between 2 and 3 refresh effects every second
-                if (plugin.getConfig().getInt("level") > 1 && plugin.getConfig().getInt("level") < 4) {
+                //If castle level is between 1 and 2 refresh effects every second
+                if (plugin.getConfig().getInt("level") > 0 && plugin.getConfig().getInt("level") < 3) {
                     new BukkitRunnable() {
 
                         @Override
@@ -202,8 +227,8 @@ public class GuildWars implements CommandExecutor, Listener {
                         }
                     }.runTask(plugin);
                 }
-                //If castle level is 4 or above refresh strengthened effects every second
-                else if (plugin.getConfig().getInt("level") > 3) {
+                //If castle level is 3 or above refresh strengthened effects every second
+                else if (plugin.getConfig().getInt("level") > 2) {
                     new BukkitRunnable() {
 
                         @Override
@@ -250,8 +275,8 @@ public class GuildWars implements CommandExecutor, Listener {
                         return;
                     }
 
-                    //If castle level is between 3 and 5 run mercenaries 1
-                    if (plugin.getConfig().getInt("level") > 2 && plugin.getConfig().getInt("level") < 6) {
+                    //If castle level is 0 or 1 run mercenaries 1
+                    if (plugin.getConfig().getInt("level") <= 1) {
                         new BukkitRunnable() {
 
                             @Override
@@ -261,8 +286,8 @@ public class GuildWars implements CommandExecutor, Listener {
                             }
                         }.runTask(plugin);
                     }
-                    //If castle level is above level 5 run mercenaries 2
-                    else if (plugin.getConfig().getInt("level") > 4) {
+                    //If castle level is above level 1 run mercenaries 2
+                    else if (plugin.getConfig().getInt("level") > 1) {
                         new BukkitRunnable() {
 
                             @Override
@@ -319,7 +344,8 @@ public class GuildWars implements CommandExecutor, Listener {
 
         //Adding king
         player.setMetadata("royal", new FixedMetadataValue(plugin, "gw"));
-        player.addPotionEffect(new PotionEffect(PotionEffectType.INCREASE_DAMAGE, 99999, 3, false, false), true);
+        player.addPotionEffect(new PotionEffect(PotionEffectType.INCREASE_DAMAGE, 99999, 2, false, false), true);
+        player.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 99999, 0, false, false), true);
 
         Location location = new Location(Bukkit.getWorld("world"), 91.5, 148.25, 72.5);
         ArmorStand stand = (ArmorStand) Bukkit.getServer().getWorld("world").spawnEntity(location, EntityType.ARMOR_STAND);
@@ -327,7 +353,6 @@ public class GuildWars implements CommandExecutor, Listener {
         stand.setInvulnerable(true);
         stand.setCollidable(false);
         stand.setGravity(false);
-        Bukkit.getServer().broadcastMessage("adding passenger: " + player.toString());
         stand.addPassenger(player);
 
 
@@ -340,24 +365,32 @@ public class GuildWars implements CommandExecutor, Listener {
         //Update holders
         String tag = GuildManager.getPlayerGuildTag(player.getUniqueId().toString());
 
-        // TODO: Uncomment this when building
-//		String tag = "";
-        plugin.getConfig().set("defenders", tag);
+        //Update holders
         updateHolders();
+
+        //Restore original level to castle if they take it back
+        if (plugin.getConfig().getString("original defenders") == tag) {
+            plugin.getConfig().set("defenders", tag);
+            plugin.getConfig().set("level", plugin.getConfig().getInt("original defenders level"));
+        } else {
+            plugin.getConfig().set("defenders", tag);
+            plugin.getConfig().set("level", 0);
+        } //TODO CHANGE EFFECTS FOR NEW LEVELS, CHANGE MERCENARIES FOR NEW LEVELS, CHANGE LOOT FOR NEW LEVELS,
+        //TODO MAKE CHANGING THE UPGRADE BLOCKS A METHOD AND CALL IT WHEN THEY TAKE CASTLE (INCASE ITS NOT 0) (RIGHT NOW THEY JUST SET TO AIR)
+
+
+        plugin.saveConfig();
 
         Bukkit.getServer().broadcastMessage(ChatColor.GOLD + "[Guild Wars] " + ChatColor.BLUE + player.getName() + " has killed the Queen. " + ChatColor.BOLD + tag + ChatColor.BLUE + " is now defending.");
 
         //Purge enemies
         purgeCastle();
 
-        //Upgrades
-        plugin.getConfig().set("level", 0);
-        plugin.saveConfig();
-
         Block signBlock = Bukkit.getWorld("world").getBlockAt(91, 141, 74);
         BlockState signState = signBlock.getState();
         Sign sign = (Sign) signState;
-        sign.setLine(1, ChatColor.BOLD + "Castle level: " + 0);
+        sign.setLine(1, ChatColor.BOLD + "Castle level");
+        sign.setLine(2, ChatColor.BOLD + "" + plugin.getConfig().getInt("original defenders level"));
         sign.setGlowingText(true);
         sign.update();
 
@@ -367,6 +400,21 @@ public class GuildWars implements CommandExecutor, Listener {
         Bukkit.getWorld("world").getBlockAt(92, 139, 73).setType(Material.AIR);
         Bukkit.getWorld("world").getBlockAt(92, 140, 73).setType(Material.AIR);
         Bukkit.getWorld("world").getBlockAt(92, 141, 73).setType(Material.AIR);
+
+        int level = plugin.getConfig().getInt("level");
+
+        if (level > 0) {
+            Bukkit.getWorld("world").getBlockAt(90, 139, 73).setType(Material.BEACON);
+            Bukkit.getWorld("world").getBlockAt(92, 139, 73).setType(Material.BEACON);
+        }
+        if (level > 1) {
+            Bukkit.getWorld("world").getBlockAt(90, 140, 73).setType(Material.MAGMA_BLOCK);
+            Bukkit.getWorld("world").getBlockAt(92, 140, 73).setType(Material.MAGMA_BLOCK);
+        }
+        if (level > 2) {
+            Bukkit.getWorld("world").getBlockAt(90, 141, 73).setType(Material.GOLD_BLOCK);
+            Bukkit.getWorld("world").getBlockAt(92, 141, 73).setType(Material.GOLD_BLOCK);
+        }
     }
 
     private static void gwEnd() {
@@ -445,20 +493,18 @@ public class GuildWars implements CommandExecutor, Listener {
 
             String pTag = GuildManager.getPlayerGuildTag(p.getUniqueId().toString());
 
-            // TODO: Uncomment this when building
-//			String pTag = "";
             if (pTag != null) {
-                // TODO: Uncomment this when building
-//				boolean contains = false;
                 boolean contains = GuildManager.getAllies(plugin.getConfig().getString("defenders").toLowerCase()).contains(pTag);
                 if (pTag.equals(plugin.getConfig().getString("defenders")) || contains) {
                 } else {
-                    if (inCastle(p.getLocation())) {
+                    if (inSpawn(p.getLocation())) {
                         p.teleport(castleSpawn, TeleportCause.PLUGIN);
                     }
                 }
             } else {
-                p.teleport(castleSpawn, TeleportCause.PLUGIN);
+                if (inSpawn(p.getLocation())) {
+                    p.teleport(castleSpawn, TeleportCause.PLUGIN);
+                }
             }
         }
     }
@@ -559,6 +605,10 @@ public class GuildWars implements CommandExecutor, Listener {
         }
     }
 
+    private static void updateHolders() {
+ 		holders = GuildManager.getGuildPlayers(plugin.getConfig().getString("defenders"));
+    }
+
     private void upgradeCastle(String name) {
         int level = plugin.getConfig().getInt("level");
         int newLevel = level + 1;
@@ -573,30 +623,31 @@ public class GuildWars implements CommandExecutor, Listener {
 
         BlockState signState = signBlock.getState();
         Sign sign = (Sign) signState;
-        sign.setLine(1, ChatColor.BOLD + "Castle level: " + newLevel);
+        sign.setLine(1, ChatColor.BOLD + "Castle level");
+        sign.setLine(2, ChatColor.BOLD + "" + newLevel);
+
         sign.setGlowingText(true);
         sign.update();
 
         switch (newLevel) {
             case 1:
-                Bukkit.getWorld("world").getBlockAt(90, 139, 73).setType(Material.GOLD_BLOCK);
-                break;
-            case 2:
-                Bukkit.getWorld("world").getBlockAt(90, 140, 73).setType(Material.BEACON);
-                break;
-            case 3:
-                Block skullBlock = Bukkit.getWorld("world").getBlockAt(90, 141, 73);
-                skullBlock.setType(Material.SKELETON_WALL_SKULL);
-                Directional skullData = (Directional) skullBlock.getBlockData();
-                skullData.setFacing(BlockFace.SOUTH);
-                skullBlock.setBlockData(skullData);
-                break;
-            case 4:
+                Bukkit.getWorld("world").getBlockAt(90, 139, 73).setType(Material.BEACON);
                 Bukkit.getWorld("world").getBlockAt(92, 139, 73).setType(Material.BEACON);
                 break;
-            case 5:
-                Block headBlock = Bukkit.getWorld("world").getBlockAt(92, 140, 73);
-                headBlock.setType(Material.MAGMA_BLOCK);
+            case 2:
+                Bukkit.getWorld("world").getBlockAt(90, 140, 73).setType(Material.MAGMA_BLOCK);
+                Bukkit.getWorld("world").getBlockAt(92, 140, 73).setType(Material.MAGMA_BLOCK);
+                break;
+            case 3:
+                Bukkit.getWorld("world").getBlockAt(90, 141, 73).setType(Material.GOLD_BLOCK);
+                Bukkit.getWorld("world").getBlockAt(92, 141, 73).setType(Material.GOLD_BLOCK);
+                break;
+//            case 4:
+//                Bukkit.getWorld("world").getBlockAt(92, 139, 73).setType(Material.BEACON);
+//                break;
+//            case 5:
+//                Block headBlock = Bukkit.getWorld("world").getBlockAt(92, 140, 73);
+//                headBlock.setType(Material.MAGMA_BLOCK);
 
 //			//Set skin
 //			Skull head = (Skull) headBlock.getState();
@@ -608,10 +659,10 @@ public class GuildWars implements CommandExecutor, Listener {
 //			Directional headData = (Directional) headBlock.getBlockData();
 //			headData.setFacing(BlockFace.SOUTH);
 //			headBlock.setBlockData(headData);
-                break;
-            case 6:
-                Bukkit.getWorld("world").getBlockAt(92, 141, 73).setType(Material.GOLD_BLOCK);
-                break;
+//                break;
+//            case 6:
+//                Bukkit.getWorld("world").getBlockAt(92, 141, 73).setType(Material.GOLD_BLOCK);
+//                break;
         }
 
         canUpgrade = false;
@@ -651,10 +702,6 @@ public class GuildWars implements CommandExecutor, Listener {
             }
         }
         return false;
-    }
-
-    private static void updateHolders() {
-// 		holders = GuildManager.getGuildPlayers(plugin.getConfig().getString("defenders"));
     }
 
     private static void refreshEffects(int buffLevel) {
@@ -706,31 +753,26 @@ public class GuildWars implements CommandExecutor, Listener {
         Chest chest8 = (Chest) world.getBlockAt(96, 140, 73).getState();
 
         List<Chest> chests = Arrays.asList(chest1, chest2, chest3, chest4, chest5, chest6, chest7, chest8);
-
         for (Chest chest : chests) {
             Inventory inventory = chest.getBlockInventory();
             for (int i = 0; i < inventory.getSize(); i++) { //Loop through each item slot in inventory
                 ItemStack item = getLootItem();
                 if (item != null) {
                     if (item.getType() != Material.AIR) {
-                        Bukkit.getPlayer("Vaape").getInventory().addItem(item);
+                        inventory.addItem(item);
                     }
                 }
                 inventory.setItem(i, getLootItem());
             }
         }
-        Bukkit.getWorld("world").playSound(new Location(Bukkit.getWorld("world"), 91, 140, 73), Sound.ENTITY_ILLUSIONER_CAST_SPELL, 1.5f, 0.1f);
+        world.playSound(new Location(Bukkit.getWorld("world"), 91, 140, 73), Sound.ENTITY_ILLUSIONER_CAST_SPELL, 1.5f, 0.1f);
     }
 
     private static ItemStack getLootItem() {
         int level = plugin.getConfig().getInt("level");
         int lootLevel = 0;
-        if (level == 0) { //Loot level 0
-            lootLevel = 0;
-        } else if (level > 0 && level < 6) { //Loot level 1
+        if (level > 2) { //Loot level 1
             lootLevel = 1;
-        } else if (level == 6) { //Loot level 2
-            lootLevel = 2;
         }
 
         Set<String> itemNames = plugin.getConfig().getConfigurationSection("loot.probabilities level " + lootLevel).getKeys(false);
@@ -883,12 +925,12 @@ public class GuildWars implements CommandExecutor, Listener {
             int level = plugin.getConfig().getInt("level");
             int newLevel = level + 1;
 
-            if (level == 6) {
-                player.sendMessage(ChatColor.RED + "You can not upgrade the castle beyond level 6.");
+            if (level == 3) {
+                player.sendMessage(ChatColor.RED + "You can not upgrade the castle beyond level 3.");
                 return;
             }
 
-            if (hand != null && hand.getType() == Material.DRAGON_EGG && hand.getAmount() >= (newLevel * 5)) {
+            if (hand != null && hand.getType() == Material.DRAGON_EGG && hand.getAmount() >= ((newLevel + 1) * 5)) {
 
                 if (canUpgrade) {
                     hand.setAmount(hand.getAmount() - (newLevel * 5));
@@ -898,7 +940,7 @@ public class GuildWars implements CommandExecutor, Listener {
                     player.sendMessage(ChatColor.RED + "The castle can not be upgraded right now.");
                 }
             } else {
-                player.sendMessage(ChatColor.RED + "You need " + (newLevel * 5) + " dragon eggs to upgrade the castle to level " + newLevel + ".");
+                player.sendMessage(ChatColor.RED + "You need " + ((newLevel + 1) * 5) + " dragon eggs to upgrade the castle to level " + newLevel + ".");
             }
         }
     }
@@ -958,7 +1000,6 @@ public class GuildWars implements CommandExecutor, Listener {
         }
 
         if (event.getEntity().hasMetadata("royal")) {
-            Bukkit.broadcastMessage("exited stand");
             event.setCancelled(true);
         }
     }
@@ -1016,7 +1057,7 @@ public class GuildWars implements CommandExecutor, Listener {
                 }
                 if (attacker instanceof Player) {
                     Player player = (Player) attacker;
-// 					String tag = GuildManager.getPlayerGuildTag(player.getUniqueId().toString());
+ 					String tag = GuildManager.getPlayerGuildTag(player.getUniqueId().toString());
                     if (tag == null) {
                         player.sendMessage(ChatColor.RED + "You must be in a guild to attack the King.");
                     } else if (plugin.getConfig().getString("defenders").equals(tag)) {
@@ -1048,13 +1089,9 @@ public class GuildWars implements CommandExecutor, Listener {
     @EventHandler
     public void onRightClick(PlayerInteractEvent event) {
 
-        if (event.getClickedBlock() == null) {
-            return;
-        }
+        if (event.getClickedBlock() == null) return;
 
-        if (!inCastle(event.getClickedBlock().getLocation())) {
-            return;
-        }
+        if (!inCastle(event.getClickedBlock().getLocation())) return;
 
         Player player = event.getPlayer();
 
@@ -1064,20 +1101,18 @@ public class GuildWars implements CommandExecutor, Listener {
 
         if (event.getAction() == Action.RIGHT_CLICK_BLOCK) {
 
-            if (event.getClickedBlock().getType() == Material.SPRUCE_DOOR) {
+            if (event.getClickedBlock().getType() == Material.SPRUCE_DOOR || event.getClickedBlock().getType() == Material.CHEST) {
 
                 event.setCancelled(true);
 
  				String tag = GuildManager.getPlayerGuildTag(player.getUniqueId().toString());
-                // TODO: Uncomment this if building
-//              String tag = "";
 
                 if (tag == null) {
-                    player.sendMessage(ChatColor.RED + "Only castle holders can open this door.");
+                    player.sendMessage(ChatColor.RED + "Only holders of the castle can open this.");
                 } else if (plugin.getConfig().getString("defenders").equals(tag)) {
                     event.setCancelled(false);
                 } else {
-                    player.sendMessage(ChatColor.RED + "Only castle holders can open this door.");
+                    player.sendMessage(ChatColor.RED + "Only holders of the castle can open this.");
                 }
             }
         }

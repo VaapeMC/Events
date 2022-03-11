@@ -91,8 +91,6 @@ import net.md_5.bungee.api.ChatColor;
 
 public class Fishing implements CommandExecutor, Listener{
 	
-	//TODO FIXY FIXY TIME REMAINING TIMER
-	
 	static Events plugin;
 	static WorldGuardPlugin worldGuard = Events.getWorldGuard();
 	static WorldEditPlugin worldEdit = Events.getWorldEdit();
@@ -101,7 +99,7 @@ public class Fishing implements CommandExecutor, Listener{
 	
 	public static boolean fishRunning = Events.fishRunning;
 	
-	private static int minutes = 10;
+	private static int minutes = 30;
 	private static int seconds = 0;
 	
 	public static Scoreboard board = Bukkit.getScoreboardManager().getNewScoreboard();
@@ -117,11 +115,21 @@ public class Fishing implements CommandExecutor, Listener{
 		
 		if (cmd.getName().equalsIgnoreCase("fishstart") || cmd.getName().equalsIgnoreCase("fstart")) {
 			if (sender.isOp()) {
-				sender.sendMessage(ChatColor.GREEN + "Fishing event started.");
 				startFishMessages();
+				sender.sendMessage(ChatColor.GREEN + "Fishing messages started.");
 			}
 			else {
-				sender.sendMessage("Unknown command. Type \"/help\" for help.");
+				sender.sendMessage(ChatColor.RED + "You don't have permission to do that.");
+			}
+		}
+		if (cmd.getName().equalsIgnoreCase("fishstartnow") || cmd.getName().equalsIgnoreCase("fstartnow")) {
+			if (sender.isOp()) {
+				startFish();
+				Bukkit.getServer().broadcastMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "[Fishing] " + ChatColor.BLUE + ChatColor.BOLD + "Event has begun! /scoreboard fish");
+				sender.sendMessage(ChatColor.GREEN + "Fishing event started.");
+			}
+			else {
+				sender.sendMessage(ChatColor.RED + "You don't have permission to do that.");
 			}
 		}
 
@@ -131,12 +139,12 @@ public class Fishing implements CommandExecutor, Listener{
 			
 			if (cmd.getName().equalsIgnoreCase("fishing") || cmd.getName().equalsIgnoreCase("fish")) {
 				
-				ZoneId zone = ZoneId.of("-05:00");
+				ZoneId zone = ZoneId.of("UTC");
 				
 				LocalDateTime now = LocalDateTime.now(zone);
-				LocalDateTime nextWednesday = now.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY)).with(LocalTime.of(16, 0));
+				LocalDateTime nextSunday = now.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY)).with(LocalTime.of(21, 0));
 			
-				long millisUntilEvent = now.until(nextWednesday, ChronoUnit.SECONDS);
+				long millisUntilEvent = now.until(nextSunday, ChronoUnit.SECONDS);
 				
 				player.sendMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "Fish info:");
 				
@@ -145,7 +153,7 @@ public class Fishing implements CommandExecutor, Listener{
 				}
 				
 				else {
-					player.sendMessage(ChatColor.BLUE + "Next fishing event: " + ChatColor.GRAY + "Sunday 16:00 EST");
+					player.sendMessage(ChatColor.BLUE + "Next fishing event: " + ChatColor.GRAY + "Sunday 21:00 GMT");
 					player.sendMessage(ChatColor.BLUE + "Time until next event: " +
 										ChatColor.GRAY + String.format("%d hours %d minutes",
 										TimeUnit.SECONDS.toHours(millisUntilEvent),
@@ -157,36 +165,66 @@ public class Fishing implements CommandExecutor, Listener{
 	}
 	
 	private static void startFishMessages() {
-		Bukkit.getServer().broadcastMessage(ChatColor.AQUA + "[Fishing] " + ChatColor.BLUE + "Event starts in 1 hour.");
+		Bukkit.getServer().broadcastMessage("");
+		Bukkit.getServer().broadcastMessage(ChatColor.AQUA + "[Fishing] " + ChatColor.BLUE + "PvP Fishing Tournament starts in 1 hour at /warp Fish! Use /sb fish to open the scoreboard.");
+		Bukkit.getServer().broadcastMessage("");
 		Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(Events.getInstance(), new Runnable() {
 			
 			@Override
 			public void run() {
-				Bukkit.getServer().broadcastMessage(ChatColor.AQUA + "[Fishing] " + ChatColor.BLUE + "Event starts in 30 minutes.");
+				Bukkit.getServer().broadcastMessage("");
+				Bukkit.getServer().broadcastMessage(ChatColor.AQUA + "[Fishing] " + ChatColor.BLUE + "PvP Fishing Tournament starts in 30 minutes at /warp Fish! Use /sb fish to open the scoreboard.");
+				Bukkit.getServer().broadcastMessage("");
 			}
-		}, 3 * 6 * 20);
+		}, 30 * 60 * 20);
 		Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(Events.getInstance(), new Runnable() {
-			
+
 			@Override
 			public void run() {
-				Bukkit.getServer().broadcastMessage(ChatColor.AQUA + "[Fishing] " + ChatColor.BLUE + "Event starts in 10 minutes.");
+				Bukkit.getServer().broadcastMessage("");
+				Bukkit.getServer().broadcastMessage(ChatColor.AQUA + "[Fishing] " + ChatColor.BLUE + "PvP Fishing Tournament starts in 20 minutes at /warp Fish! Use /sb fish to open the scoreboard.");
+				Bukkit.getServer().broadcastMessage("");
 			}
-		}, 5 * 6 * 20);
+		}, 40 * 60 * 20);
 		Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(Events.getInstance(), new Runnable() {
 			
 			@Override
 			public void run() {
-				Bukkit.getServer().broadcastMessage(ChatColor.AQUA + "[Fishing] " + ChatColor.BLUE + "Event starts in 5 minutes.");
+				Bukkit.getServer().broadcastMessage("");
+				Bukkit.getServer().broadcastMessage(ChatColor.AQUA + "[Fishing] " + ChatColor.BLUE + "PvP Fishing Tournament starts in 10 minutes at /warp Fish! Use /sb fish to open the scoreboard.");
+				Bukkit.getServer().broadcastMessage("");
 			}
-		}, 55 * 6 * 2);
+		}, 50 * 60 * 20);
+		Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(Events.getInstance(), new Runnable() {
+
+			@Override
+			public void run() {
+				Bukkit.getServer().broadcastMessage("");
+				Bukkit.getServer().broadcastMessage(ChatColor.AQUA + "[Fishing] " + ChatColor.BLUE + "PvP Fishing Tournament starts in 5 minutes at /warp Fish! Use /sb fish to open the scoreboard.");
+				Bukkit.getServer().broadcastMessage("");
+			}
+		}, 55 * 60 * 20);
+		Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(Events.getInstance(), new Runnable() {
+
+			@Override
+			public void run() {
+				Bukkit.getServer().broadcastMessage("");
+				Bukkit.getServer().broadcastMessage(ChatColor.AQUA + "[Fishing] " + ChatColor.BLUE + "PvP Fishing Tournament starts in 1 minute at /warp Fish! Use /sb fish to open the scoreboard.");
+				Bukkit.getServer().broadcastMessage("");
+			}
+		}, 59 * 60 * 20);
 		Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(Events.getInstance(), new Runnable() {
 			
 			@Override
 			public void run() {
-				Bukkit.getServer().broadcastMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "[Fishing] " + ChatColor.BLUE + ChatColor.BOLD + "Event has begun! /scoreboard fish");
+				Bukkit.getServer().broadcastMessage("");
+				Bukkit.getServer().broadcastMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "[Fishing] " + ChatColor.BLUE + ChatColor.BOLD + "Event has begun at /warp Fish!");
+				Bukkit.getServer().broadcastMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "[Fishing] " + ChatColor.BLUE + ChatColor.BOLD + "Event has begun at /warp Fish!");
+				Bukkit.getServer().broadcastMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "[Fishing] " + ChatColor.BLUE + ChatColor.BOLD + "Event has begun at /warp Fish!");
+				Bukkit.getServer().broadcastMessage("");
 				startFish();
 			}
-		}, 6 * 6 * 20);
+		}, 60 * 60 * 20);
 	}
 	
 	private static void startFish() {
@@ -202,8 +240,8 @@ public class Fishing implements CommandExecutor, Listener{
 			
 		}
 		
-		minutes = 1;
-		seconds = 30;
+		minutes = 30;
+		seconds = 0;
 		
 		o.setDisplayName(ChatColor.BLUE + "" + ChatColor.BOLD + "Fishing");
 		o.setDisplaySlot(DisplaySlot.SIDEBAR);
@@ -230,15 +268,19 @@ public class Fishing implements CommandExecutor, Listener{
 					for (Map.Entry<String, Integer> set : allScores.entrySet()) { //Iterate through all entries on the scoreboard
 						int value = set.getValue();
 						if (value != 999) { //This is the entry for the timer countdown
-							if (value > topScore) {
+							if (value >= topScore) {
 								first = set.getKey();
 								topScore = value;
 							}
-							Bukkit.getPlayer(set.getKey()).setGlowing(false); //Make every person on the scoreboard not glowing
+							if (Bukkit.getPlayer(set.getKey()) != null) {
+								Bukkit.getPlayer(set.getKey()).setGlowing(false); //Make every person on the scoreboard not glowing
+							}
 						}
 					}
-					
-					Bukkit.getPlayer(first).setGlowing(true); //Set the person in first to glowing
+
+					if (Bukkit.getPlayer(first) != null) {
+						Bukkit.getPlayer(first).setGlowing(true); //Set the person in first to glowing
+					}
 				}
 				
 				seconds--;
@@ -349,26 +391,28 @@ public class Fishing implements CommandExecutor, Listener{
 			OfflinePlayer first = Bukkit.getServer().getOfflinePlayer(fullList.get(fullList.size() - 2));
 			plugin.getConfig().set("fishing.winner", first.getUniqueId().toString());
 			Bukkit.getServer().broadcastMessage(ChatColor.AQUA + "[Fishing] " + ChatColor.BLUE + first.getName() + " has won the fishing event and recieved a Rare Fish!");
-			Rewards.plugin.giveReward("fish1stplace", first, true);
+			Rewards.plugin.giveReward("fish_1st_place", first, true);
 		}
 		else {
 			Bukkit.getServer().broadcastMessage(ChatColor.AQUA + "[Fishing] " + ChatColor.BLUE + "Fishing event ended with no prizes given!");
 		}
 		if (fullList.size() > 3) {
 			OfflinePlayer second = Bukkit.getServer().getOfflinePlayer(fullList.get(fullList.size() - 4));
-			Rewards.plugin.giveReward("fish2ndplace", second, true);
+			Rewards.plugin.giveReward("fish_2nd_place", second, true);
 		}
 		if (fullList.size() > 5) {
 			OfflinePlayer third = Bukkit.getServer().getOfflinePlayer(fullList.get(fullList.size() - 6));
-			Rewards.plugin.giveReward("fish3rdplace", third, true);
+			Rewards.plugin.giveReward("fish_3rd_place", third, true);
 		}
 		
 		List<OfflinePlayer> placed = new ArrayList<>();
-		
-		for (int i = 4; i <=1; i += 2) {
-			placed.add(Bukkit.getServer().getOfflinePlayer(fullList.get(fullList.size() - i)));
+
+		for (int i = 8; i<=20; i+= 2) {
+			if ((i >= 0) && (i < fullList.size())) {
+				placed.add(Bukkit.getServer().getOfflinePlayer(fullList.get(fullList.size() - i)));
+			}
 		}
-		
+
 		for (OfflinePlayer player : placed) {
 			Rewards.plugin.giveReward("degg", player, true);
 		}
@@ -452,10 +496,6 @@ public class Fishing implements CommandExecutor, Listener{
 				plugin.getConfig().set("fishing." + event.getPlayer().getUniqueId().toString() + ".multiplier", 1);
 				plugin.saveConfig();
 			}
-			else {
-				event.getPlayer().sendMessage(ChatColor.RED + "The fishing event isn't currently active, try /fish.");
-				event.setCancelled(true);
-			}
 		}
 	}
 	
@@ -490,6 +530,7 @@ public class Fishing implements CommandExecutor, Listener{
 	
 	@EventHandler
 	public void onPlayerJoin (PlayerJoinEvent event) {
+		event.getPlayer().setGlowing(false);
 		if (inFish(event.getPlayer().getLocation())) {
 			Location spawn = new Location(Bukkit.getServer().getWorld("world"), -26.5, 103, 193.5, 270, 0);
 			event.getPlayer().teleport(spawn, TeleportCause.PLUGIN);

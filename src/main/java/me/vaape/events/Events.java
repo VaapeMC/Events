@@ -47,48 +47,53 @@ public class Events extends JavaPlugin implements Listener{
 	
 	public static ArrayList<String> gw = new ArrayList<>();
 	public static ArrayList<String> fish = new ArrayList<>();
+	public static ArrayList<String> invasion = new ArrayList<>();
 	public static ArrayList<String> off = new ArrayList<>();
 	
 	public static boolean gwRunning = false;
 	public static boolean fishRunning = false;
+	public static boolean invasionRunning = false;
 	
 	public void onEnable() {
 		plugin = this;
 		loadConfiguration();
 		getLogger().info(ChatColor.GREEN + "Events have been enabled!");
+
+		Invasion invasionPlugin = new Invasion(this);
+
 		getServer().getPluginManager().registerEvents(this, this);
 		getServer().getPluginManager().registerEvents(new GuildWars(this), this);
 		getServer().getPluginManager().registerEvents(new CrateDrops(this), this);
 		getServer().getPluginManager().registerEvents(new Fishing(this), this);
+		getServer().getPluginManager().registerEvents(new BeheadListener(this), this);
+		getServer().getPluginManager().registerEvents(invasionPlugin, this);
 		
 		plugin.getCommand("guildwars").setExecutor(new GuildWars(this));
 		plugin.getCommand("gw").setExecutor(new GuildWars(this));
 		plugin.getCommand("guildwarsstart").setExecutor(new GuildWars(this));
 		plugin.getCommand("gwstart").setExecutor(new GuildWars(this));
+		plugin.getCommand("guildwarsstartnow").setExecutor(new GuildWars(this));
+		plugin.getCommand("gwstartnow").setExecutor(new GuildWars(this));
 		plugin.getCommand("guildwarsend").setExecutor(new GuildWars(this));
 		plugin.getCommand("gwend").setExecutor(new GuildWars(this));
 		plugin.getCommand("guildwarsrefill").setExecutor(new GuildWars(this));
 		plugin.getCommand("gwrefill").setExecutor(new GuildWars(this));
+		plugin.getCommand("guildwarsallowupgrade").setExecutor(new GuildWars(this));
+		plugin.getCommand("gwallowupgrade").setExecutor(new GuildWars(this));
 		
 		plugin.getCommand("fstart").setExecutor(new Fishing(this));
 		plugin.getCommand("fishstart").setExecutor(new Fishing(this));
 		plugin.getCommand("fishing").setExecutor(new Fishing(this));
 		plugin.getCommand("fish").setExecutor(new Fishing(this));
+
+		plugin.getCommand("scheduledropcrate").setExecutor(new CrateDrops(this));
+		plugin.getCommand("scheduledropcratenow").setExecutor(new CrateDrops(this));
+
+		plugin.getCommand("invasionstart").setExecutor(invasionPlugin);
+		plugin.getCommand("invasionstartnow").setExecutor(invasionPlugin);
+		plugin.getCommand("invasionend").setExecutor(invasionPlugin);
 		
-		plugin.getCommand("dropcrate").setExecutor(new CrateDrops(this));
-		
-		CrateDrops.scheduleNextCrateDrop(60);
-		
-		Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() { //The server will restart daily so this will occur daily
-			
-			@Override
-			public void run() {
-				GuildWars.canUpgrade = true;
-				Bukkit.broadcastMessage(ChatColor.GOLD + "[Guild Wars] " + ChatColor.BLUE + "The castle can now be upgraded.");
-				GuildWars.refillLoot();
-			}
-		},1 * 60 * 60 * 20); //1 hour
-	}
+		}
 	
 	public void onDisable(){
 		plugin = null;
@@ -144,6 +149,7 @@ public class Events extends JavaPlugin implements Listener{
 						else {
 							gw.add(UUID);
 							fish.remove(UUID);
+							invasion.remove(UUID);
 							off.remove(UUID);
 							player.sendMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "Guild Wars " + ChatColor.BLUE + "scoreboard enabled.");
 							player.setScoreboard(getGWBoard()); 
@@ -160,6 +166,7 @@ public class Events extends JavaPlugin implements Listener{
 						else {
 							fish.add(UUID);
 							gw.remove(UUID);
+							invasion.remove(UUID);
 							off.remove(UUID);
 							
 							if (Fishing.fishRunning) {
@@ -172,6 +179,30 @@ public class Events extends JavaPlugin implements Listener{
 							player.sendMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "Fishing " + ChatColor.BLUE + "scoreboard enabled.");
 						}
 					}
+					//Invasion
+					else if (args[0].equalsIgnoreCase("invasion") || args[0].equalsIgnoreCase("i")) {
+						if (invasion.contains(UUID)) {
+							invasion.remove(UUID);
+							off.add(UUID);
+							player.sendMessage(ChatColor.BLUE + "Scoreboard disabled.");
+							player.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
+						}
+						else {
+							invasion.add(UUID);
+							gw.remove(UUID);
+							fish.remove(UUID);
+							off.remove(UUID);
+
+							if (Invasion.invasionRunning) {
+								player.setScoreboard(Invasion.board);
+							}
+							else {
+								player.setScoreboard(Invasion.getInvasionScoreboard());
+							}
+
+							player.sendMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "Invasion " + ChatColor.BLUE + "scoreboard enabled.");
+						}
+					}
 					
 					//Off
 					else if (args[0].equalsIgnoreCase("off") || args[0].equalsIgnoreCase("disable")) {
@@ -181,6 +212,7 @@ public class Events extends JavaPlugin implements Listener{
 						else {
 							off.add(UUID);
 							fish.remove(UUID);
+							invasion.remove(UUID);
 							gw.remove(UUID);
 							player.sendMessage(ChatColor.BLUE + "Scoreboard disabled.");
 							player.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
@@ -211,22 +243,6 @@ public class Events extends JavaPlugin implements Listener{
 		
 		defenders.setScore(1);
 		level.setScore(0);
-		
-		return board;
-	}
-	
-	public Scoreboard getFishBoard() {
-		Scoreboard board = Bukkit.getScoreboardManager().getNewScoreboard();
-		Objective o = board.registerNewObjective("fish", "dummy");
-		
-		o.setDisplayName(ChatColor.AQUA + "" + ChatColor.BOLD + "Fish");
-		o.setDisplaySlot(DisplaySlot.SIDEBAR);
-		
-		Score guy1 = o.getScore(ChatColor.GOLD + "Guy 1");
-		Score guy2 = o.getScore(ChatColor.GOLD + "Guy 2");
-		
-		guy1.setScore(1);
-		guy2.setScore(0);
 		
 		return board;
 	}

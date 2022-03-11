@@ -59,9 +59,7 @@ import net.md_5.bungee.api.ChatColor;
 public class CrateDrops implements CommandExecutor, Listener{
 	
 	static Events plugin;
-	
-	public static ArrayList<String> off = Events.off;
-	
+
 	public static boolean landed; //True after ANY crate has landed since last restart (unless falling blocks are in the air or waiting for backup timer)
 	//public static Location crateCoords = null; //Will be null until first crate drop
 	
@@ -75,126 +73,81 @@ public class CrateDrops implements CommandExecutor, Listener{
 	//TODO Set exact values for location, random loot in chest
 	
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-		
-		if (sender instanceof Player) {
-			Player player = (Player) sender;
-			
-			if (cmd.getName().equalsIgnoreCase("dropcrate")) {
-				
-				if (player.hasPermission("events.dropcrate")) {
-					
-					startCrateDrop(getRandomLocation().clone().add(0.5, 0, 0.5));
-					player.sendMessage(ChatColor.GREEN + "Crate drop started.");
-				}
-				else {
-					player.sendMessage(ChatColor.RED + "You do not have permission to do that.");
-				}
+
+		if (cmd.getName().equalsIgnoreCase("scheduledropcrate")) {
+
+			if (sender.hasPermission("events.scheduledropcrate")) {
+
+				startCrateDropMessages(getRandomLocation().clone().add(0.5, 0, 0.5));
+				sender.sendMessage(ChatColor.GREEN + "Crate drop started.");
 			}
-			
-			return true;
+			else {
+				sender.sendMessage(ChatColor.RED + "You do not have permission to do that.");
+			}
 		}
-		
-		return false;
-	}
-	
-	//Once crate has landed, this starts a background timer for new crate to drop in given amount of hours
-	public static void scheduleNextCrateDrop(int seconds) {
-		new Timer().schedule(new TimerTask() {
-			
-			@Override
-			public void run() {
-				//startCrateDropMessages(getRandomLocation().clone().add(0.5, 0, 0.5));
-				startCrateDrop(getRandomLocation().clone().add(0.5, 0, 0.5));
+
+		if (cmd.getName().equalsIgnoreCase("scheduledropcratenow")) {
+
+			if (sender.hasPermission("events.scheduledropcrate")) {
+				dropCrate(getRandomLocation().clone().add(0.5, 0, 0.5));
+				sender.sendMessage(ChatColor.GREEN + "Crate dropped.");
 			}
-		}, seconds * 1000);
+		}
+
+		return true;
 	}
 	
 	private static void startCrateDropMessages(Location location) {
 		
-		startCrateDrop(location);
-		
 		Bukkit.getServer().broadcastMessage(ChatColor.YELLOW + "[Crate Drop] " + ChatColor.BLUE + "A crate will drop at [" + location.getBlockX() + ", " + location.getBlockZ() + "] in 30 minutes.");
-		
+
+		//20 minute warning
+		new BukkitRunnable() {
+			@Override
+			public void run() {
+				Bukkit.getServer().broadcastMessage(ChatColor.YELLOW + "[Crate Drop] " + ChatColor.BLUE + "A crate will drop at [" + location.getBlockX()  + ", " + location.getBlockZ() + "] in 20 minutes.");
+			}
+		}.runTaskLater(plugin, 10 * 60 * 20);
+
 		//10 minute warning
-				new Timer().schedule(new TimerTask() {
-					
-					@Override
-					public void run() {
-						Bukkit.getServer().broadcastMessage(ChatColor.YELLOW + "[Crate Drop] " + ChatColor.BLUE + "A crate will drop at [" + location.getBlockX()  + ", " + location.getBlockZ() + "] in 5 minutes.");
-					}
-				}, 20 * 60 * 1000);
-		
+		new BukkitRunnable() {
+			@Override
+			public void run() {
+				Bukkit.getServer().broadcastMessage(ChatColor.YELLOW + "[Crate Drop] " + ChatColor.BLUE + "A crate will drop at [" + location.getBlockX()  + ", " + location.getBlockZ() + "] in 10 minutes.");
+			}
+		}.runTaskLater(plugin, 20 * 60 * 20);
+
 		//5 minute warning
-		new Timer().schedule(new TimerTask() {
-			
+		new BukkitRunnable() {
 			@Override
 			public void run() {
 				Bukkit.getServer().broadcastMessage(ChatColor.YELLOW + "[Crate Drop] " + ChatColor.BLUE + "A crate will drop at [" + location.getBlockX()  + ", " + location.getBlockZ() + "] in 5 minutes.");
 			}
-		}, 25 * 60 * 1000);
-		
+		}.runTaskLater(plugin, 25 * 60 * 20);
+
 		//1 minute warning
-		new Timer().schedule(new TimerTask() {
-					
+		new BukkitRunnable() {
 			@Override
 			public void run() {
 				Bukkit.getServer().broadcastMessage(ChatColor.YELLOW + "[Crate Drop] " + ChatColor.BLUE + "A crate will drop at [" + location.getBlockX()  + ", " + location.getBlockZ() + "] in 1 minute.");
 			}
-		}, 29 * 60 * 1000);
-		
+		}.runTaskLater(plugin, 29 * 60 * 20);
+
 		//30 second warning
-		new Timer().schedule(new TimerTask() {
-			
+		new BukkitRunnable() {
 			@Override
 			public void run() {
 				Bukkit.getServer().broadcastMessage(ChatColor.YELLOW + "[Crate Drop] " + ChatColor.BLUE + "A crate will drop at [" + location.getBlockX()  + ", " + location.getBlockZ() + "] in 30 seconds.");
 			}
-		}, 1770 * 1000); //29.5 * 60 = 1770
-		
+		}.runTaskLater(plugin, 1770 * 20); //29.5 * 60 = 1770
+
 		//Drop
-		new Timer().schedule(new TimerTask() {
-							
-			@Override
-			public void run() {				
-				Bukkit.getServer().broadcastMessage(ChatColor.YELLOW + "" + ChatColor.BOLD + "[Crate Drop] " + ChatColor.BLUE + "" + ChatColor.BOLD + "A crate has dropped at [" + location.getBlockX()  + ", " + location.getBlockZ() + "]");
-			}
-		}, 30 * 60 * 1000);
-	}
-	
-	public static void startCrateDrop(Location crateLocation) {
-		
-		//Timer
-		new Timer().schedule(new TimerTask() {
-			
-			int minutes = 0;
-			int seconds = 30;
-			
+		new BukkitRunnable() {
 			@Override
 			public void run() {
-				seconds--;
-						
-						if (seconds < 0) {
-							minutes--;
-							seconds = 59;
-							
-							//When timer reaches 0 minutes 0 seconds
-							if (minutes < 0) {
-								this.cancel(); //Cancel timer
-								
-								new BukkitRunnable() {
-									
-									@Override
-									public void run() {
-								
-										dropCrate(crateLocation);
-										
-									}
-								}.runTask(plugin);
-									return;
-							}
-						}
-					}
-			}, 1000, 1000);
+				dropCrate(location);
+			}
+		}.runTaskLater(plugin, 30 * 60 * 20);
 	}
 	
 	public static void dropCrate(Location location) {
@@ -285,6 +238,8 @@ public class CrateDrops implements CommandExecutor, Listener{
 		}
 		
 		fallingWood1.setMetadata("reference", new FixedMetadataValue(plugin, "cratedrops"));
+
+		Bukkit.getServer().broadcastMessage(ChatColor.YELLOW + "" + ChatColor.BOLD + "[Crate Drop] " + ChatColor.BLUE + "" + ChatColor.BOLD + "A crate has dropped at [" + location.getBlockX()  + ", " + location.getBlockZ() + "]");
 	}
 	
 	private static List<Chunk> getSurroundingChunks(Location location) { //Gets 3x3 chunk grid around location
@@ -427,23 +382,7 @@ public class CrateDrops implements CommandExecutor, Listener{
 						catch (IOException e) {
 							e.printStackTrace();
 						}
-						
-						
-						if (day == Calendar.SATURDAY || day == Calendar.SUNDAY) {
-							//average 3 times per day
-							//5 hours base + (0-6)
-							int fiveHours = 21600;
-							Random random = new Random();
-							scheduleNextCrateDrop(fiveHours + (random.nextInt(9) * 3600));
-						}
-						else {
-							//2 times per day
-							//8 hours base + (0-8)
-							int tenHours = 28800;
-							Random random = new Random();
-							scheduleNextCrateDrop(tenHours + (random.nextInt(9) * 3600));
-						}
-						
+
 					}
 				}.runTask(plugin);
 			}
@@ -465,10 +404,9 @@ public class CrateDrops implements CommandExecutor, Listener{
 		Random randomX = new Random();
 		Random randomZ = new Random();
 		
-		int x = randomX.nextInt(13) + 247;
-		int z = randomZ.nextInt(13) + 54;
-		
-		if ((z > 56 && z < 64) || (x > 249 && x < 257)) {
+		int x = randomX.nextInt(1200) - 500;
+		int z = randomZ.nextInt(1200) - 500;
+		if (z > -115 && z < 485 && x > -245 && x < 320) {
 			return getRandomLocation();
 		}
 		else {

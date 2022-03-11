@@ -16,6 +16,10 @@ commands:
     description: Starts Guild Wars
   gwstart:
     description: Starts Guild Wars
+  guildwarsstartnow:
+    description: Starts Guild Wars now
+  gwstartnow:
+    description: Starts Guild Wars now
   guildwarsend:
     description: Ends Guild Wars
   gwend:
@@ -24,7 +28,13 @@ commands:
     description: Refills loot chests
   gwrefill:
     description: Refills loot chests
-  dropcrate:
+  guildwarsallowupgrade:
+    description: Allows guild wars to be upgraded
+  gwallowupgrade:
+    description: Allows guild wars to be upgraded
+  scheduledropcrate:
+    description: Starts crate drop messages
+  scheduledropcratenow:
     description: Drops a crate
   fstart:
     description: Starts fishing event
@@ -34,3 +44,9 @@ commands:
     description: Get info on fishing event
   fishing:
     description: Get info on fishing event
+  invasionstart:
+    description: Start invasion event
+  invasionstartnow:
+    description: Start invasion event now
+  invasionend:
+    description: End invasion event
