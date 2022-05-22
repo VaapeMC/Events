@@ -406,12 +406,11 @@ public class CrateDrops implements CommandExecutor, Listener{
 		
 		int x = randomX.nextInt(1200) - 500;
 		int z = randomZ.nextInt(1200) - 500;
-		if (z > -115 && z < 485 && x > -245 && x < 320) {
+		if (z > -183 && z < 571 && x > -314 && x < 405) {
 			return getRandomLocation();
 		}
 		else {
-			Location location = new Location(Bukkit.getServer().getWorld("world"), x, 256, z);
-			return location;
+			return new Location(Bukkit.getServer().getWorld("world"), x, 256, z);
 		}
 	}
 	

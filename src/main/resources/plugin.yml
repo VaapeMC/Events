@@ -1,9 +1,12 @@
 name: Events
 main: me.vaape.events.Events
 version: 1.0
-api-version: 1.15
+api-version: 1.18
 depend: [Guilds, WorldGuard, WorldGuardEvents, WorldEdit, Rewards]
 commands:
+  eventsreload:
+    description: Reload the events config
+    permission: events.reload
   scoreboard:
     description: Toggle event scoreboard
   sb:
@@ -14,39 +17,56 @@ commands:
     description: Get info on Guild Wars
   guildwarsstart:
     description: Starts Guild Wars
+    permission: events.gw.start
   gwstart:
     description: Starts Guild Wars
+    permission: events.gw.start
   guildwarsstartnow:
     description: Starts Guild Wars now
+    permission: events.gw.startnow
   gwstartnow:
     description: Starts Guild Wars now
+    permission: events.gw.startnow
   guildwarsend:
     description: Ends Guild Wars
+    permission: events.gw.end
   gwend:
     description: Ends Guild Wars
+    permission: events.gw.end
   guildwarsrefill:
     description: Refills loot chests
+    permission: events.gw.refill
   gwrefill:
     description: Refills loot chests
+    permission: events.gw.refill
   guildwarsallowupgrade:
     description: Allows guild wars to be upgraded
+    permission: events.gw.allowupgrade
   gwallowupgrade:
     description: Allows guild wars to be upgraded
+    permission: events.gw.allowupgrade
   scheduledropcrate:
     description: Starts crate drop messages
+    permission: events.cratedrops.scheduledropcrate
   scheduledropcratenow:
     description: Drops a crate
+    permission: events.cratedrops.scheduledropcratenow
   fstart:
     description: Starts fishing event
+    permission: events.fish.start
   fishstart:
     description: Starts fishing event
+    permission: events.fish.start
   fish:
     description: Get info on fishing event
   fishing:
     description: Get info on fishing event
   invasionstart:
     description: Start invasion event
+    permission: events.invasion.start
   invasionstartnow:
     description: Start invasion event now
+    permission: events.invasion.start
   invasionend:
     description: End invasion event
+    permission: events.invasion.end

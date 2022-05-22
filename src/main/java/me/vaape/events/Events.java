@@ -57,7 +57,7 @@ public class Events extends JavaPlugin implements Listener{
 	public void onEnable() {
 		plugin = this;
 		loadConfiguration();
-		getLogger().info(ChatColor.GREEN + "Events have been enabled!");
+		getServer().getConsoleSender().sendMessage(ChatColor.GREEN + "Events have been enabled!");
 
 		Invasion invasionPlugin = new Invasion(this);
 
@@ -132,6 +132,16 @@ public class Events extends JavaPlugin implements Listener{
 			
 			Player player = (Player) sender;
 			String UUID = player.getUniqueId().toString();
+
+			if (cmd.getName().equalsIgnoreCase("eventsreload")) {
+				if (player.hasPermission("events.reload")) {
+					plugin.reloadConfig();
+					player.sendMessage(ChatColor.GREEN + "Events config reloaded.");
+				}
+				else {
+					player.sendMessage(ChatColor.RED + "You do not have permission to do that.");
+				}
+			}
 			
 			if (cmd.getName().equalsIgnoreCase("scoreboard") || cmd.getName().equalsIgnoreCase("sb")) {
 				if (args.length == 0) {
